@@ -1,3 +1,6 @@
+import "spriteSheetAnimationSystem"
+import "listUtil"
+
 clear
 
 normaliseVector2 = function(vector)
@@ -7,7 +10,7 @@ normaliseVector2 = function(vector)
 end function
 
 PLAYERSPAWN = {
-    "x": 480,
+    "x": 400,
     "y": 320}
 
 PLAYERSPEED = 100
@@ -15,6 +18,11 @@ PLAYERSPEED = 100
 setupBackground = function()
     display(7).color = color.white
     display(5).clear(color.clear)
+end function
+
+setupUI = function()
+    display(2).mode = displayMode.pixel
+    display(2).clear(color.clear)
 end function
 
 player = {}
@@ -54,8 +62,41 @@ player.update = function(delta)
     player.sprite.y = player.y
 end function
 
+campfire = {}
+campfire.x = 480
+campfire.y = 320
+campfire.timeLeft = 30
+campfire.animationSystem = new spriteSheetAnimationSystem.SpriteSheetAnimationSystem
+campfire.animationSystem.init "images/campfire.png", 2, 1
+campfire.animationSystem.addAnimation "burn", [[0,0],[1,0]], 4
+campfire.animationSystem.switchAnimation "burn"
+campfire.sprite = new Sprite
+campfire.sprite.scale = [2,2]
+
+campfire.update = function(delta)
+    self.timeLeft = self.timeLeft - delta
+
+    self.animationSystem.update delta
+    self.sprite.x = self.x
+    self.sprite.y = self.y
+    self.sprite.image = self.animationSystem.getFrame
+end function
+
+drawUI = function
+    display(2).clear(color.clear)
+    secondsLeft = ceil(campfire.timeLeft)
+    if secondsLeft > 0 then
+        display(2).print("Fire left: " + secondsLeft + "s", 32, 600, color.orange)
+    else
+        display(2).print("Game Over", 32, 600, color.orange)
+    end if
+end function
+
 display(4).sprites.push player.sprite
+display(4).sprites.push campfire.sprite
+
 setupBackground
+setupUI
 
 gameRunning = true
 lastTimestamp = time
@@ -63,9 +104,14 @@ while gameRunning
     currentTimestamp = time
     delta = currentTimestamp - lastTimestamp
     lastTimestamp = currentTimestamp
-
     if key.pressed("q") then gameRunning = false
-    player.update delta
+    if(campfire.timeLeft > 0) then
+        player.update delta
+        campfire.update delta
+        display(4).sprites.sort "y"
+        display(4).sprites.reverse
+    end if
+    drawUI
     yield    
 end while
 
