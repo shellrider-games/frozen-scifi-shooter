@@ -1,2 +1,1 @@
-# frozen-scifi-shooter
-Minimicro try of doing a twinstick shooter
+Well, it became something else
